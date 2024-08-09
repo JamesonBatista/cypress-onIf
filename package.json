@@ -1,0 +1,25 @@
+{
+  "name": "cypress-onif",
+  "version": "1.0.0",
+  "description": "Targeted framework to ignore element search failures",
+  "main": "index.js",
+  "scripts": {
+    "postinstall": "node src/start.js"
+  },
+  "files": [
+    "src",
+    "index.js",
+    "start.js"
+  ],
+  "types": "src",
+  "author": "Jam Batista QA Specialist <batistadado@gmail.com>",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/JamesonBatista/cypress-onIf.git"
+  },
+  "bugs": {
+    "url": "https://github.com/JamesonBatista/cypress-onIf/issues"
+  },
+  "homepage": "https://github.com/JamesonBatista/cypress-onIf#readme"
+}
