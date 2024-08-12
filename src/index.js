@@ -7,8 +7,8 @@ const skipCommand = (cmd) => {
   cmd.attributes.skip = true;
   cmd.state = "skipped";
   Cypress.log({
-	displayName: "skip",
-	message: `[${cmd.attributes.name}] ignored.`,
+    displayName: "skip",
+    message: `[${cmd.attributes.name}] ignored.`,
   });
 };
 
@@ -18,7 +18,6 @@ function skipRestOfTheChain(cmd, chainerId) {
     cmd.attributes.chainerId === chainerId &&
     cmd.attributes.name !== "finally"
   ) {
-
     skipCommand(cmd);
     cmd = cmd.attributes.next;
   }
@@ -128,9 +127,7 @@ Cypress.Commands.add(
     if (!hasSubject || !assertionsPassed) {
       let nextCommand = cmd.attributes.next;
       while (nextCommand && nextCommand.attributes.chainerId === chainerId) {
-       
         if (nextCommand.attributes.name === "else") {
-          
           nextCommand = null;
         } else {
           skipCommand(nextCommand);
@@ -143,15 +140,12 @@ Cypress.Commands.add(
       }
 
       if (subject) {
-       
         cy.wrap(subject, { log: false });
       }
       return;
     } else {
-      
       let nextCommand = cmd.attributes.next;
       while (nextCommand && nextCommand.attributes.chainerId === chainerId) {
-    
         if (nextCommand.attributes.name === "else") {
           skipRestOfTheChain(nextCommand, chainerId);
           nextCommand = null;
@@ -189,54 +183,51 @@ Cypress.Commands.add("finally", { prevSubject: true }, (subject) => {
     cy.wrap(subject, { log: false });
   }
 });
+Cypress.Commands.overwriteQuery(
+  "get",
+  function (get, selector, options) {
+    selectors = selector;
+    let innerFn;
+    const cmd = cy.state("current");
+    debug(cmd);
+    const next = cmd.attributes.next;
+    let nextCommand = cmd.attributes.next;
+    innerFn = get.call(this, selector, options);
 
-Cypress.Commands.overwriteQuery("get", function (get, selector, options) {
-  selectors = selector
-
-  const cmd = cy.state("current");
-  debug(cmd);
-  const next = cmd.attributes.next;
-  let nextCommand = cmd.attributes.next;
-
-  const innerFn = get.call(this, selector, options);
-
-  if (isIfCommand(next)) {
-    if (selector.startsWith("@")) {
-      return (subject) => {
-        try {
-          return innerFn(subject);
-        } catch (e) {
-          if (e.message.includes("could not find a registered alias for")) {
-            return undefined;
+    if (isIfCommand(next)) {
+      if (selector.startsWith("@")) {
+        return (subject) => {
+          try {
+            return innerFn(subject);
+          } catch (e) {
+            if (e.message.includes("could not find a registered alias for")) {
+              return undefined;
+            }
           }
+        };
+      }
+      return (subject) => {
+        const res = innerFn(subject);
+        if (res && res.length) {
+          return res;
         }
       };
     }
-    return (subject) => {
-      const res = innerFn(subject);
-      if (res && res.length) {
-    
-        return res;
-      }
 
-    };
+    return (subject) => innerFn(subject);
   }
-
-  return (subject) => innerFn(subject);
-});
+);
 
 Cypress.Commands.overwriteQuery(
   "contains",
   function (contains, selector, text, options) {
-    
     if (arguments.length === 2) {
       text = selector;
       selector = undefined;
     }
-    
 
     const cmd = cy.state("current");
-    
+
     const next = cmd.attributes.next;
     const innerFn = contains.call(this, selector, text, options);
 
@@ -244,11 +235,8 @@ Cypress.Commands.overwriteQuery(
       return (subject) => {
         const res = innerFn(subject);
         if (res && res.length) {
-          
           return res;
         }
-
-        
       };
     }
 
@@ -257,7 +245,6 @@ Cypress.Commands.overwriteQuery(
 );
 
 Cypress.Commands.overwriteQuery("find", function (find, selector, options) {
-
   const cmd = cy.state("current");
   const next = cmd.attributes.next;
   const innerFn = find.call(this, selector, options);
@@ -266,10 +253,8 @@ Cypress.Commands.overwriteQuery("find", function (find, selector, options) {
     return (subject) => {
       const res = innerFn(subject);
       if (res && res.length) {
-
         return res;
       }
-
     };
   }
 
@@ -277,11 +262,8 @@ Cypress.Commands.overwriteQuery("find", function (find, selector, options) {
 });
 
 Cypress.Commands.overwrite("task", function (task, args, options) {
-  
-
   const cmd = cy.state("current");
   if (cmd) {
-    
     const next = cmd.attributes.next;
 
     if (isIfCommand(next)) {
@@ -312,9 +294,8 @@ Cypress.Commands.add("raise", (x) => {
 });
 
 Cypress.Commands.overwriteQuery("not", function (notCommand, selector) {
-
   const cmd = cy.state("current");
-  
+
   const next = cmd.attributes.next;
   const innerFn = notCommand.call(this, selector);
 
@@ -324,16 +305,11 @@ Cypress.Commands.overwriteQuery("not", function (notCommand, selector) {
       if (res && res.length) {
         return res;
       }
-      
     };
   }
 
   return (subject) => innerFn(subject);
 });
-
-  
-
-
 
 const app = window.top;
 if (!app.document.head.querySelector("[data-hide-command-log-request]")) {
