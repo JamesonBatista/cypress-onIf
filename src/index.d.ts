@@ -11,7 +11,7 @@ declare namespace Cypress {
      * @example
      * cy.get('button').onIf().click();
      */
-    onIf(
+    onif(
       assertion: string | ((subject: Subject) => boolean),
       assertionValue?: any
     ): Chainable<Subject>;

@@ -1,7 +1,7 @@
-const debug = require("debug")("cypress-onIf");
+const debug = require("debug")("cypress-onif");
 let selectors;
-const isIfCommand = (cmd) =>
-  cmd && cmd.attributes && cmd.attributes.name === "onIf";
+const Command = (cmd) =>
+  cmd && cmd.attributes && cmd.attributes.name === "onif";
 
 const skipCommand = (cmd) => {
   cmd.attributes.skip = true;
@@ -12,7 +12,7 @@ const skipCommand = (cmd) => {
   });
 };
 
-function skipRestOfTheChain(cmd, chainerId) {
+function skipChain(cmd, chainerId) {
   while (
     cmd &&
     cmd.attributes.chainerId === chainerId &&
@@ -23,26 +23,26 @@ function skipRestOfTheChain(cmd, chainerId) {
   }
 }
 
-function findMyIfSubject(elseCommandAttributes) {
-  if (!elseCommandAttributes) {
+function findSub(elseCommand) {
+  if (!elseCommand) {
     return;
   }
-  if (elseCommandAttributes.name === "onIf") {
-    return elseCommandAttributes.ifSubject;
+  if (elseCommand.name === "onif") {
+    return elseCommand.ifSubject;
   }
   if (
-    !elseCommandAttributes.skip &&
-    !Cypress._.isNil(elseCommandAttributes.subject)
+    !elseCommand.skip &&
+    !Cypress._.isNil(elseCommand.subject)
   ) {
-    return elseCommandAttributes.subject;
+    return elseCommand.subject;
   }
-  if (elseCommandAttributes.prev) {
-    return findMyIfSubject(elseCommandAttributes.prev.attributes);
+  if (elseCommand.prev) {
+    return findSub(elseCommand.prev.attributes);
   }
 }
 
 Cypress.Commands.add(
-  "onIf",
+  "onif",
   { prevSubject: true },
   function (subject, assertion, assertionValue) {
     const cmd = cy.state("current");
@@ -147,7 +147,7 @@ Cypress.Commands.add(
       let nextCommand = cmd.attributes.next;
       while (nextCommand && nextCommand.attributes.chainerId === chainerId) {
         if (nextCommand.attributes.name === "else") {
-          skipRestOfTheChain(nextCommand, chainerId);
+          skipChain(nextCommand, chainerId);
           nextCommand = null;
         } else {
           nextCommand = nextCommand.attributes.next;
@@ -160,7 +160,7 @@ Cypress.Commands.add(
 
 Cypress.Commands.add("else", { prevSubject: true }, (subject, text) => {
   if (typeof subject === "undefined") {
-    subject = findMyIfSubject(cy.state("current").attributes);
+    subject = findSub(cy.state("current").attributes);
   }
   if (typeof text !== undefined) {
     cy.log(text);
@@ -176,7 +176,7 @@ Cypress.Commands.add("finally", { prevSubject: true }, (subject) => {
   if (typeof subject === "undefined" || subject === null) {
     const currentCommand = cy.state("current").attributes;
     debug("current command is finally", currentCommand);
-    subject = findMyIfSubject(currentCommand);
+    subject = findSub(currentCommand);
     debug("found subject", subject);
   }
   if (subject) {
@@ -194,7 +194,7 @@ Cypress.Commands.overwriteQuery(
     let nextCommand = cmd.attributes.next;
     innerFn = get.call(this, selector, options);
 
-    if (isIfCommand(next)) {
+    if (Command(next)) {
       if (selector.startsWith("@")) {
         return (subject) => {
           try {
@@ -231,7 +231,7 @@ Cypress.Commands.overwriteQuery(
     const next = cmd.attributes.next;
     const innerFn = contains.call(this, selector, text, options);
 
-    if (isIfCommand(next)) {
+    if (Command(next)) {
       return (subject) => {
         const res = innerFn(subject);
         if (res && res.length) {
@@ -249,7 +249,7 @@ Cypress.Commands.overwriteQuery("find", function (find, selector, options) {
   const next = cmd.attributes.next;
   const innerFn = find.call(this, selector, options);
 
-  if (isIfCommand(next)) {
+  if (Command(next)) {
     return (subject) => {
       const res = innerFn(subject);
       if (res && res.length) {
@@ -266,7 +266,7 @@ Cypress.Commands.overwrite("task", function (task, args, options) {
   if (cmd) {
     const next = cmd.attributes.next;
 
-    if (isIfCommand(next)) {
+    if (Command(next)) {
       return task(args, options).then(
         (taskResult) => {
           return taskResult;
@@ -299,7 +299,7 @@ Cypress.Commands.overwriteQuery("not", function (notCommand, selector) {
   const next = cmd.attributes.next;
   const innerFn = notCommand.call(this, selector);
 
-  if (isIfCommand(next)) {
+  if (Command(next)) {
     return (subject) => {
       const res = innerFn(subject);
       if (res && res.length) {
@@ -318,7 +318,7 @@ if (!app.document.head.querySelector("[data-hide-command-log-request]")) {
   let click = `#unified-reporter > div > div > div.wrap > ul > li > div > div.collapsible-content.runnables-region > ul > li > div > div.collapsible-content.runnable-instruments > div > ul > li > div > div.collapsible-content.attempt-content > div > div > ul > li > div > div.collapsible-content > ul > li.command.command-name-click`;
   let type = `#unified-reporter > div > div > div.wrap > ul > li > div > div.collapsible-content.runnables-region > ul > li > div > div.collapsible-content.runnable-instruments > div > ul > li > div > div.collapsible-content.attempt-content > div > div > ul > li > div > div.collapsible-content > ul > li.command.command-name-type`;
   let assert = `#unified-reporter > div > div > div.wrap > ul > li > div > div.collapsible-content.runnables-region > ul > li > div > div.collapsible-content.runnable-instruments > div > ul > li > div > div.collapsible-content.attempt-content > div > div > ul > li > div > div.collapsible-content > ul > li.command.command-name-assert`;
-  let skip = `#unified-reporter > div > div > div.wrap > ul > li > div > div.collapsible-content.runnables-region > ul > li > div > div.collapsible-content.runnable-instruments > div > ul > li > div > div.collapsible-content.attempt-content > div > div > ul > li > div > div.collapsible-content > ul > li.command.command-name-onIf`;
+  let skip = `#unified-reporter > div > div > div.wrap > ul > li > div > div.collapsible-content.runnables-region > ul > li > div > div.collapsible-content.runnable-instruments > div > ul > li > div > div.collapsible-content.attempt-content > div > div > ul > li > div > div.collapsible-content > ul > li.command.command-name-onif`;
   let select = `#unified-reporter > div > div > div.wrap > ul > li > div > div.collapsible-content.runnables-region > ul > li > div > div.collapsible-content.runnable-instruments > div > ul > li > div > div.collapsible-content.attempt-content > div > div > ul > li > div > div.collapsible-content > ul > li.command.command-name-select`;
 
   let change = `div > span > div > span.command-info > span.command-message > span.command-message-text { color: white;}`;
